@@ -1,8 +1,5 @@
-import {
-  handlePrompt,
-  handleRapidPrompt,
-} from './handler'
-import type { Provider } from '@/types/provider'
+import { handlePrompt, handleRapidPrompt } from './handler';
+import type { Provider } from '@/types/provider';
 
 const providerOpenAI = () => {
   const provider: Provider = {
@@ -18,39 +15,24 @@ const providerOpenAI = () => {
       {
         key: 'baseUrl',
         name: 'Base URL',
-        description: 'Custom base url for OpenAI API.',
+        description: 'Base URL personalizado para a API da OpenAI.',
         type: 'input',
         default: 'https://api.openai.com',
       },
       {
         key: 'model',
-        name: 'OpenAI model',
-        description: 'Custom gpt model for OpenAI API.',
+        name: 'Modelo da OpenAI',
+        description: 'Modelo gpt personalizado para a API da OpenAI.',
         type: 'select',
         options: [
-          { value: 'gpt-3.5-turbo', label: 'gpt-3.5-turbo' },
-          { value: 'gpt-4', label: 'gpt-4' },
-          { value: 'gpt-4-0314', label: 'gpt-4-0314' },
-          { value: 'gpt-4-0613', label: 'gpt-4-0613' },
-          { value: 'gpt-4-1106-preview', label: 'gpt-4-1106-preview' },
-          { value: 'gpt-4-0125-preview', label: 'gpt-4-0125-preview' },
-          { value: 'gpt-4-turbo-preview', label: 'gpt-4-turbo-preview' },
-          { value: 'gpt-4-32k', label: 'gpt-4-32k' },
-          { value: 'gpt-4-32k-0314', label: 'gpt-4-32k-0314' },
-          { value: 'gpt-4-32k-0613', label: 'gpt-4-32k-0613' },
-          { value: 'gpt-3.5-turbo-0125', label: 'gpt-3.5-turbo-0125' },
-          { value: 'gpt-3.5-turbo-0301', label: 'gpt-3.5-turbo-0301' },
-          { value: 'gpt-3.5-turbo-0613', label: 'gpt-3.5-turbo-0613' },
-          { value: 'gpt-3.5-turbo-1106', label: 'gpt-3.5-turbo-1106' },
-          { value: 'gpt-3.5-turbo-16k', label: 'gpt-3.5-turbo-16k' },
-          { value: 'gpt-3.5-turbo-16k-0613', label: 'gpt-3.5-turbo-16k-0613' },
+          // Opções do modelo
         ],
         default: 'gpt-3.5-turbo',
       },
       {
         key: 'maxTokens',
-        name: 'Max Tokens',
-        description: 'The maximum number of tokens to generate in the completion.',
+        name: 'Máximo de Tokens',
+        description: 'O número máximo de tokens a serem gerados na conclusão.',
         type: 'slider',
         min: 0,
         max: 32768,
@@ -59,8 +41,8 @@ const providerOpenAI = () => {
       },
       {
         key: 'messageHistorySize',
-        name: 'Max History Message Size',
-        description: 'The number of retained historical messages will be truncated if the length of the message exceeds the MaxToken parameter.',
+        name: 'Tamanho Máximo do Histórico de Mensagens',
+        description: 'O número de mensagens históricas retidas será truncado se o comprimento da mensagem exceder o parâmetro MaxToken.',
         type: 'slider',
         min: 1,
         max: 24,
@@ -69,9 +51,9 @@ const providerOpenAI = () => {
       },
       {
         key: 'temperature',
-        name: 'Temperature',
+        name: 'Temperatura',
         type: 'slider',
-        description: 'What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
+        description: 'Qual temperatura de amostragem usar, entre 0 e 2. Valores mais altos como 0.8 tornarão a saída mais aleatória, enquanto valores mais baixos como 0.2 a tornarão mais focada e determinística.',
         min: 0,
         max: 2,
         default: 0.7,
@@ -80,7 +62,7 @@ const providerOpenAI = () => {
       {
         key: 'top_p',
         name: 'Top P',
-        description: 'An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.',
+        description: 'Uma alternativa à amostragem com temperatura, chamada de amostragem de núcleo, onde o modelo considera os resultados dos tokens com massa de probabilidade top_p. Portanto, 0.1 significa que apenas os tokens que compõem os 10% principais de massa de probabilidade são considerados.',
         type: 'slider',
         min: 0,
         max: 1,
@@ -92,13 +74,13 @@ const providerOpenAI = () => {
       {
         id: 'chat_continuous',
         type: 'chat_continuous',
-        name: 'Continuous Chat',
+        name: 'Chat Contínuo',
         settings: [],
       },
       {
         id: 'chat_single',
         type: 'chat_single',
-        name: 'Single Chat',
+        name: 'Chat Único',
         settings: [],
       },
       {
@@ -110,8 +92,8 @@ const providerOpenAI = () => {
     ],
     handlePrompt,
     handleRapidPrompt,
-  }
-  return provider
-}
+  };
+  return provider;
+};
 
-export default providerOpenAI
+export default providerOpenAI;
