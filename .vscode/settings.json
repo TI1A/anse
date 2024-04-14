@@ -1,6 +1,6 @@
 {
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
+    "source.fixAll.eslint": "explicit"
   },
   "editor.formatOnSave": false,
   "eslint.validate": [
@@ -13,5 +13,8 @@
   "i18n-ally.localesPaths": [
     "src/locale",
     "src/locale/lang"
-  ]
+  ],
+  "genieai.openai.model": "gpt-3.5-turbo",
+  "genieai.openai.temperature": 0,
+  "genieai.openai.organization": "org-lgSWVMqqO1KqXXWVf1Ivt08h"
 }
