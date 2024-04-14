@@ -39,11 +39,11 @@ export default () => {
       <footer class="h-14 fi justify-between px-3">
         <ThemeToggle />
         <div text-xs op-40 px-2>
-          <a href=" " target="_blank" rel="noreferrer" class="hv-foreground">
+          <a href="https://samuelyossef.com/" target="_blank" rel="noreferrer" class="hv-foreground">
             {t('docs')}
           </a>
           <span class="px-1"> · </span>
-          <a href=" " target="_blank" rel="noreferrer" class="hv-foreground">
+          <a href="https://samuelyossef.com/" target="_blank" rel="noreferrer" class="hv-foreground">
             {t('about')}
           </a>
         </div>
