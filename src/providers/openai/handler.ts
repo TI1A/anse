@@ -1,107 +1,106 @@
-import { fetchChatCompletion, fetchImageGeneration } from './api'
-import { parseStream } from './parser'
-import type { Message } from '@/types/message'
-import type { HandlerPayload, Provider } from '@/types/provider'
+import { fetchChatCompletion, fetchImageGeneration } from './api';
+import { parseStream } from './parser';
+import type { HandlerPayload, Provider, PromptResponse } from '@/types/provider';
 
-export const handlePrompt: Provider['handlePrompt'] = async(payload, signal?: AbortSignal) => {
-  if (payload.botId === 'chat_continuous')
-    return handleChatCompletion(payload, signal)
-  if (payload.botId === 'chat_single')
-    return handleChatCompletion(payload, signal)
-  if (payload.botId === 'image_generation')
-    return handleImageGeneration(payload)
-}
+const handleChatCompletion = async (payload: HandlerPayload, signal: AbortSignal) => {
+    const messages: any[] = [];
+    let maxTokens: number = typeof payload.globalSettings.maxTokens === 'number' ? payload.globalSettings.maxTokens : Number(payload.globalSettings.maxTokens);
+    let messageHistorySize: number = typeof payload.globalSettings.messageHistorySize === 'number' ? payload.globalSettings.messageHistorySize : Number(payload.globalSettings.messageHistorySize);
 
-export const handleRapidPrompt: Provider['handleRapidPrompt'] = async(prompt, globalSettings) => {
-  const rapidPromptPayload = {
-    conversationId: 'temp',
-    conversationType: 'chat_single',
-    botId: 'temp',
-    globalSettings: {
-      ...globalSettings,
-      model: 'gpt-3.5-turbo',
-      temperature: 0.4,
-      maxTokens: 2048,
-      top_p: 1,
-      stream: false,
-    },
-    botSettings: {},
-    prompt,
-    messages: [{ role: 'user', content: prompt }],
-  } as HandlerPayload
-  const result = await handleChatCompletion(rapidPromptPayload)
-  if (typeof result === 'string')
-    return result
-  return ''
-}
+    while (messageHistorySize > 0) {
+        messageHistorySize--;
+        const m = payload.messages.pop();
+        if (m === undefined) {
+            break;
+        }
 
-const handleChatCompletion = async(payload: HandlerPayload, signal?: AbortSignal) => {
-  // An array to store the chat messages
-  const messages: Message[] = []
+        if (maxTokens - m.content.length < 0) {
+            break;
+        }
 
-  let maxTokens = payload.globalSettings.maxTokens as number
-  let messageHistorySize = payload.globalSettings.messageHistorySize as number
+        maxTokens -= m.content.length;
+        messages.unshift(m);
+    }
 
-  // Iterate through the message history
-  while (messageHistorySize > 0) {
-    messageHistorySize--
-    // Get the last message from the payload
-    const m = payload.messages.pop()
-    if (m === undefined)
-      break
+    const response = await fetchChatCompletion({
+        apiKey: String(payload.globalSettings.apiKey),
+        baseUrl: String(payload.globalSettings.baseUrl).trim().replace(/\/$/, ''),
+        body: {
+            messages,
+            max_tokens: maxTokens,
+            model: payload.globalSettings.model,
+            temperature: payload.globalSettings.temperature,
+            topP: payload.globalSettings.topP,
+            stream: payload.globalSettings.stream ?? true,
+        },
+        signal,
+    });
 
-    if (maxTokens - m.content.length < 0)
-      break
+    if (!response.ok) {
+        const responseJson = await response.json();
+        const errMessage = responseJson.error?.message || response.statusText || 'Unknown error';
+        throw new Error(errMessage);
+    }
 
-    maxTokens -= m.content.length
-    messages.unshift(m)
-  }
+    const isStream = response.headers.get('content-type')?.includes('text/event-stream');
+    if (isStream) {
+        return parseStream(response);
+    } else {
+        const resJson = await response.json();
+        return resJson.choices[0].message.content;
+    }
+};
 
-  const response = await fetchChatCompletion({
-    apiKey: payload.globalSettings.apiKey as string,
-    baseUrl: (payload.globalSettings.baseUrl as string).trim().replace(/\/$/, ''),
-    body: {
-      messages,
-      max_tokens: maxTokens,
-      model: payload.globalSettings.model as string,
-      temperature: payload.globalSettings.temperature as number,
-      top_p: payload.globalSettings.topP as number,
-      stream: payload.globalSettings.stream as boolean ?? true,
-    },
-    signal,
-  })
-  if (!response.ok) {
-    const responseJson = await response.json()
-    console.log('responseJson', responseJson)
-    const errMessage = responseJson.error?.message || response.statusText || 'Unknown error'
-    throw new Error(errMessage, { cause: responseJson.error })
-  }
-  const isStream = response.headers.get('content-type')?.includes('text/event-stream')
-  if (isStream) {
-    return parseStream(response)
-  } else {
-    const resJson = await response.json()
-    return resJson.choices[0].message.content as string
-  }
-}
+const handleImageGeneration = async (payload: any) => {
+    const prompt: string = payload.prompt;
+    const response = await fetchImageGeneration({
+        apiKey: String(payload.globalSettings.apiKey),
+        baseUrl: String(payload.globalSettings.baseUrl).trim().replace(/\/$/, ''),
+        body: {
+            prompt,
+            n: 1,
+            size: '512x512',
+            response_format: 'url',
+        },
+    });
 
-const handleImageGeneration = async(payload: HandlerPayload) => {
-  const prompt = payload.prompt
-  const response = await fetchImageGeneration({
-    apiKey: payload.globalSettings.apiKey as string,
-    baseUrl: (payload.globalSettings.baseUrl as string).trim().replace(/\/$/, ''),
-    body: {
-      prompt,
-      n: 1,
-      size: '512x512',
-      response_format: 'url', // TODO: support 'b64_json'
-    },
-  })
-  if (!response.ok) {
-    const responseJson = await response.json()
-    const errMessage = responseJson.error?.message || response.statusText || 'Unknown error'
-    throw new Error(errMessage)
-  }
-  const resJson = await response.json()
-  return resJson.data[0].url
-}
+    if (!response.ok) {
+        const responseJson = await response.json();
+        const errMessage = responseJson.error?.message || response.statusText || 'Unknown error';
+        throw new Error(errMessage);
+    }
+
+    const resJson = await response.json();
+    return resJson.data[0].url;
+};
+
+export const handlePrompt: Provider['handlePrompt'] = async (payload: HandlerPayload, signal?: AbortSignal): Promise<PromptResponse> => {
+    if (payload.botId === 'chat_continuous' || payload.botId === 'chat_single') {
+        return handleChatCompletion(payload, signal);
+    }
+    if (payload.botId === 'image_generation') {
+        return handleImageGeneration(payload);
+    }
+    throw new Error('Invalid botId provided.');
+};
+
+export const handleRapidPrompt: Provider['handleRapidPrompt'] = async (prompt: string, globalSettings: any) => {
+    const rapidPromptPayload: HandlerPayload = {
+        conversationId: 'temp',
+        conversationType: 'chat_single',
+        botId: 'temp',
+        globalSettings: {
+            ...globalSettings,
+            model: 'gpt-3.5-turbo',
+            temperature: 0.4,
+            maxTokens: 2048,
+            topP: 1,
+            stream: false,
+        },
+        botSettings: {},
+        prompt,
+        messages: [{ role: 'user', content: prompt }],
+    };
+    const result = await handleChatCompletion(rapidPromptPayload, new AbortController().signal);
+    return typeof result === 'string' ? result : '';
+};
